@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <InformationalVersion>0.1.0</InformationalVersion>
+    <Authors>Hojo Minori</Authors>
+    <Copyright>© 2022 Hojo Minori</Copyright>
+    <PackageTags>test</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="Implementations\Testing.fs" />
+    <Compile Include="Implementations\OperatorImpl.fs" />
+    <Compile Include="Implementations\ArgumentGeneratorBuilder.fs" />
+    <Compile Include="Implementations\TestingBuilder.fs" />
+    <Compile Include="Assert.fs" />
+    <Compile Include="TestOperator.fs" />
+    <Compile Include="ArgGen.fs" />
+  </ItemGroup>
+
+</Project>

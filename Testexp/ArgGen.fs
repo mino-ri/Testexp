@@ -2,13 +2,7 @@
 open System
 open Testexp.Implementations
 
-/// Gets an argument generator that returns pseudo-random numbers. This generates the same numbers in the same order each time.
 type private RandomArgumentGenerator = RandomArgumentGenerator with
-    member _.Generate(state: byref<RandomState>) =
-        let (RandomState(seed)) = state
-        let value = seed * 2147483649uL + 273051931uL
-        state <- RandomState(value)
-        value    
     interface IArgumentGenerator<uint64> with
         member _.Generate(state) =
             let (RandomState(seed)) = state
@@ -16,6 +10,7 @@ type private RandomArgumentGenerator = RandomArgumentGenerator with
             state <- RandomState(value)
             value
 
+/// Gets an argument generator that returns pseudo-random numbers. This generates the same numbers in the same order each time.
 let random : IArgumentGenerator<uint64> = upcast RandomArgumentGenerator
 
 [<Struct>]
@@ -37,12 +32,6 @@ type private ForEachArgumentGenerator<'T>(items: 'T[]) =
         member _.Generate(_) =
             index <- min (items.Length - 1) (index + 1)
             items[index]
-
-let bounded maxExclusive =
-    let bounded = BoundedArgumentGenerator(maxExclusive)
-    { new IArgumentGenerator<uint64> with
-        member _.Generate(state) = bounded.Generate(&state)
-    }
 
 /// Creates an argument generator that returns the constant value.
 let constant (value: 'T) =
@@ -74,6 +63,31 @@ let inline generatorInline ([<InlineIfLambda>] mapping: uint64 -> 'T) = mapInlin
 
 /// Creates an argument generator from the generator function.
 let generator (mapping: uint64 -> 'T) = mapInline mapping random
+
+let inline private chooseCore
+    ([<InlineIfLambda>] mapping: 'T -> 'U)
+    ([<InlineIfLambda>] predicate: 'U -> bool)
+    ([<InlineIfLambda>] resultMapping: 'U -> 'V)
+    (source: IArgumentGenerator<'T>) =
+    { new IArgumentGenerator<'V> with
+        member _.Generate(state) =
+            let mutable result = mapping (source.Generate(&state))
+            while not (predicate result) do
+                result <- mapping (source.Generate(&state))
+            resultMapping result
+    }
+
+/// Creates an argument generator that returns filtered value.
+let filter (predicate: 'T -> bool) (source: IArgumentGenerator<'T>) =
+    chooseCore id predicate id source
+
+/// Creates an argument generator that returns filtered value.
+let choose (chooser: 'T -> 'U option) (source: IArgumentGenerator<'T>) =
+    chooseCore chooser Option.isSome Option.get source
+
+/// Creates an argument generator that returns filtered value.
+let choosev (chooser: 'T -> 'U voption) (source: IArgumentGenerator<'T>) =
+    chooseCore chooser ValueOption.isSome ValueOption.get source
 
 let inline private rangeCore (range: ^T) ([<InlineIfLambda>] mapping: uint64 -> ^U) =
     let boundedGen = BoundedArgumentGenerator(uint64 range)

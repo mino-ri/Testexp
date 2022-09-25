@@ -13,7 +13,7 @@ type TestingBuilder internal () =
 
     /// for argument (property based test)
     member inline this.Bind(m: IArgumentGenerator<'T>, [<InlineIfLambda>] f) =
-        this.Bind((8, m), f)
+        this.Bind((64, m), f)
 
     /// for test execution
     member inline _.Bind(testing: ITesting<'T>, [<InlineIfLambda>] f: 'T -> TestContext<'T> -> unit) =

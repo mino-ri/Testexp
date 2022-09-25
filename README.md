@@ -1,9 +1,10 @@
 # Testexp
-Property based testing for F#.
+
+`Testexp` is *customable* and *deterministic* property based testing framework for F#.
 
 `Testexp` helps to write property based testing, but does not have any testing integrations.
-Use with other unit testing libraries.
-When the assertion have failed, an exception is thrown.
+Use with other unit testing frameworks.
+In `Testexp`, when the assertion have failed, an exception is thrown.
 
 Sample with Xunit:
 

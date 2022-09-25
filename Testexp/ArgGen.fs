@@ -17,7 +17,26 @@ let random : IArgumentGenerator<uint64> = upcast RandomArgumentGenerator
 type private BoundedArgumentGenerator private (maxExclusive: uint64, shiftBits: int) =
     new(maxExclusive: uint64) =
         let maxExclusive = max maxExclusive 1uL
+#if NET6_0
         let shiftBits = 63 - System.Numerics.BitOperations.Log2(maxExclusive)
+#else
+        let shiftBits =
+            let log2 (word: uint64) =
+                let mutable n = 0
+                let mutable word = word
+                let mutable z = word &&& 0xffffffff00000000uL
+                if z <> 0uL then n <- n + 32; word <- z
+                z <- word &&& 0xffff0000ffff0000uL
+                if z <> 0uL then n <- n + 16; word <- z
+                z <- word &&& 0xff00ff00ff00ff00uL
+                if z <> 0uL then n <- n + 8; word <- z
+                z <- word &&& 0xf0f0f0f0f0f0f0f0uL
+                if z <> 0uL then n <- n + 4; word <- z
+                z <- word &&& 0xccccccccccccccccuL
+                if z <> 0uL then n <- n + 2; word <- z
+                if word &&& 0xaaaaaaaaaaaaaaaauL <> 0uL then n + 1 else n
+            63 - log2 maxExclusive
+#endif
         BoundedArgumentGenerator(maxExclusive, shiftBits)
 
     member _.Generate(state: byref<RandomState>) =

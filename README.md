@@ -47,7 +47,7 @@ open Testexp
 To test, write code like this:
 
 ```fsharp
-test (*targetFunction*) (*arguments*) ==> (*assersion(s)*)
+test (*targetFunction*) (*arguments*) ==> (*assertion(s)*)
 ```
 
 or
@@ -81,7 +81,7 @@ let tuplePlus (x: int, y: int) = x + y
 test tuplePlus (2, 3)
 ```
 
-### Assersions and `==>` operator
+### Assertions and `==>` operator
 
 To verify the return values, use `Testexp.Assert` module. like this:
 
@@ -89,7 +89,7 @@ To verify the return values, use `Testexp.Assert` module. like this:
 test curriedPlus (2, 3) ==> Assert.equal 5
 ```
 
-The `==>` operator pipes the return value from `ITesting<'T>` to assersions. For multiple assertions, write an assertion *list* in the right operand.
+The `==>` operator pipes the return value from `ITesting<'T>` to assertions. For multiple assertions, write an assertion *list* in the right operand.
 
 ```fsharp
 test curriedPlus (2, 3) ==> [

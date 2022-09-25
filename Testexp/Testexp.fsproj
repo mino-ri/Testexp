@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <InformationalVersion>0.1.0</InformationalVersion>
@@ -19,7 +19,7 @@
     <Compile Include="Types.fs" />
     <Compile Include="Implementations\Testing.fs" />
     <Compile Include="Implementations\OperatorImpl.fs" />
-    <Compile Include="Implementations\ArgumentGeneratorBuilder.fs" />
+    <Compile Include="Implementations\ArgGenBuilder.fs" />
     <Compile Include="Implementations\TestingBuilder.fs" />
     <Compile Include="Assert.fs" />
     <Compile Include="TestOperator.fs" />

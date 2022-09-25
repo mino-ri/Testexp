@@ -62,11 +62,11 @@ type ValidationException<'T>(message: string, testContext: TestContext<'T>, inne
 
 
 /// For internal used.
-[<Struct; NoComparison; NoEquality>]
+[<Struct; NoComparison; StructuralEquality>]
 type RandomState = internal RandomState of uint64 with
     static member Default = RandomState(0uL)
 
 
 /// Represents argument generators for property based testing.
 type IArgumentGenerator<'T> =
-    abstract Generate : state: RandomState -> struct (RandomState * 'T)
+    abstract member Generate : state: byref<RandomState> -> 'T

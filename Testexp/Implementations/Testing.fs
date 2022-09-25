@@ -3,7 +3,9 @@ open System
 open System.Runtime.CompilerServices
 open Testexp
 
-type RandomGenerator<'T> = RandomState -> struct(RandomState * 'T)
+
+type ArgGenCode<'T> = delegate of state: byref<RandomState> -> 'T
+
 
 type Testing =
     static member inline private CreateTestCore([<InlineIfLambda>] execution: unit -> 'T, [<ParamArray>] args: ITuple) =

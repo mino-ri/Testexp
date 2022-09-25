@@ -11,7 +11,7 @@ let inline (==>) (test: ^``ITesting<'T>``) (assertion: ^Assertion) =
     (^``ITesting<'T>`` : (member Test : ^Assertion -> unit) test, assertion)
 
 /// Builds a argument generator using computation expression syntax.
-let argGen = ArgumentGeneratorBuilder()
+let argGen = ArgGenBuilder()
 
 /// Executes a (property based) test using computation expression syntax.
 let testing = TestingBuilder()

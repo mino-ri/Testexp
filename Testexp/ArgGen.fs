@@ -1,23 +1,25 @@
-﻿module Testexp.ArgGen
+module Testexp.ArgGen
+
 open System
 open Testexp.Implementations
 
-type private RandomArgumentGenerator = RandomArgumentGenerator with
-    interface IArgumentGenerator<uint64> with
-        member _.Generate(state) =
-            let (RandomState(seed)) = state
-            let value = seed * 2147483649uL + 273051931uL
-            state <- RandomState(value)
-            value
+type private RandomArgumentGenerator = RandomArgumentGenerator
+    with
+        interface IArgumentGenerator<uint64> with
+            member _.Generate(state) =
+                let (RandomState(seed)) = state
+                let value = seed * 2147483649uL + 273051931uL
+                state <- RandomState(value)
+                value
 
 /// Gets an argument generator that returns pseudo-random numbers. This generates the same numbers in the same order each time.
-let random : IArgumentGenerator<uint64> = upcast RandomArgumentGenerator
+let random: IArgumentGenerator<uint64> = upcast RandomArgumentGenerator
 
 [<Struct>]
 type private BoundedArgumentGenerator private (maxExclusive: uint64, shiftBits: int) =
     new(maxExclusive: uint64) =
         let maxExclusive = max maxExclusive 1uL
-#if NET6_0
+#if NET6_0_OR_GREATER
         let shiftBits = 63 - System.Numerics.BitOperations.Log2(maxExclusive)
 #else
         let shiftBits =
@@ -25,15 +27,25 @@ type private BoundedArgumentGenerator private (maxExclusive: uint64, shiftBits: 
                 let mutable n = 0
                 let mutable word = word
                 let mutable z = word &&& 0xffffffff00000000uL
-                if z <> 0uL then n <- n + 32; word <- z
+                if z <> 0uL then
+                    n <- n + 32
+                    word <- z
                 z <- word &&& 0xffff0000ffff0000uL
-                if z <> 0uL then n <- n + 16; word <- z
+                if z <> 0uL then
+                    n <- n + 16
+                    word <- z
                 z <- word &&& 0xff00ff00ff00ff00uL
-                if z <> 0uL then n <- n + 8; word <- z
+                if z <> 0uL then
+                    n <- n + 8
+                    word <- z
                 z <- word &&& 0xf0f0f0f0f0f0f0f0uL
-                if z <> 0uL then n <- n + 4; word <- z
+                if z <> 0uL then
+                    n <- n + 4
+                    word <- z
                 z <- word &&& 0xccccccccccccccccuL
-                if z <> 0uL then n <- n + 2; word <- z
+                if z <> 0uL then
+                    n <- n + 2
+                    word <- z
                 if word &&& 0xaaaaaaaaaaaaaaaauL <> 0uL then n + 1 else n
             63 - log2 maxExclusive
 #endif
@@ -55,7 +67,7 @@ type private ForEachArgumentGenerator<'T>(items: 'T[]) =
 /// Creates an argument generator that returns the constant value.
 let constant (value: 'T) =
     { new IArgumentGenerator<'T> with
-        member _.Generate(_) = value    
+        member _.Generate(_) = value
     }
 
 /// Represents the monad bind operator for ArgGen<T>. This is an inline function.
@@ -76,7 +88,7 @@ let inline mapInline ([<InlineIfLambda>] mapping: 'T -> 'U) (source: IArgumentGe
 
 /// Represents the functor map operator for ArgGen<T>.
 let map (mapping: 'T -> 'U) source = mapInline mapping source
-    
+
 /// Creates an argument generator from the generator function. This is an inline function.
 let inline generatorInline ([<InlineIfLambda>] mapping: uint64 -> 'T) = mapInline mapping random
 
@@ -87,7 +99,8 @@ let inline private chooseCore
     ([<InlineIfLambda>] mapping: 'T -> 'U)
     ([<InlineIfLambda>] predicate: 'U -> bool)
     ([<InlineIfLambda>] resultMapping: 'U -> 'V)
-    (source: IArgumentGenerator<'T>) =
+    (source: IArgumentGenerator<'T>)
+    =
     { new IArgumentGenerator<'V> with
         member _.Generate(state) =
             let mutable result = mapping (source.Generate(&state))
@@ -97,16 +110,13 @@ let inline private chooseCore
     }
 
 /// Creates an argument generator that returns filtered value.
-let filter (predicate: 'T -> bool) (source: IArgumentGenerator<'T>) =
-    chooseCore id predicate id source
+let filter (predicate: 'T -> bool) (source: IArgumentGenerator<'T>) = chooseCore id predicate id source
 
 /// Creates an argument generator that returns filtered value.
-let choose (chooser: 'T -> 'U option) (source: IArgumentGenerator<'T>) =
-    chooseCore chooser Option.isSome Option.get source
+let choose (chooser: 'T -> 'U option) (source: IArgumentGenerator<'T>) = chooseCore chooser Option.isSome Option.get source
 
 /// Creates an argument generator that returns filtered value.
-let choosev (chooser: 'T -> 'U voption) (source: IArgumentGenerator<'T>) =
-    chooseCore chooser ValueOption.isSome ValueOption.get source
+let choosev (chooser: 'T -> 'U voption) (source: IArgumentGenerator<'T>) = chooseCore chooser ValueOption.isSome ValueOption.get source
 
 let inline private rangeCore (range: ^T) ([<InlineIfLambda>] mapping: uint64 -> ^U) =
     let boundedGen = BoundedArgumentGenerator(uint64 range)
@@ -131,20 +141,16 @@ let int64Range (minInclusive: int64) (maxExclusive: int64) =
     rangeCore (uint64 (maxExclusive - minInclusive)) (fun value -> int64 value + minInclusive)
 
 /// Creates an argument generator that returns random integers in the specified range.
-let byteRange minInclusive maxExclusive =
-    rangeCore (maxExclusive - minInclusive) (fun value -> byte value + minInclusive)
+let byteRange minInclusive maxExclusive = rangeCore (maxExclusive - minInclusive) (fun value -> byte value + minInclusive)
 
 /// Creates an argument generator that returns random integers in the specified range.
-let uint16Range minInclusive maxExclusive =
-    rangeCore (maxExclusive - minInclusive) (fun value -> uint16 value + minInclusive)
+let uint16Range minInclusive maxExclusive = rangeCore (maxExclusive - minInclusive) (fun value -> uint16 value + minInclusive)
 
 /// Creates an argument generator that returns random integers in the specified range.
-let uint32Range minInclusive maxExclusive =
-    rangeCore (maxExclusive - minInclusive) (fun value -> uint32 value + minInclusive)
+let uint32Range minInclusive maxExclusive = rangeCore (maxExclusive - minInclusive) (fun value -> uint32 value + minInclusive)
 
 /// Creates an argument generator that returns random integers in the specified range.
-let uint64Range minInclusive maxExclusive =
-    rangeCore (maxExclusive - minInclusive) (fun value -> value + minInclusive)
+let uint64Range minInclusive maxExclusive = rangeCore (maxExclusive - minInclusive) (fun value -> value + minInclusive)
 
 /// Creates an argument generator that returns random integers in the specified range.
 let intRange minInclusive maxExclusive = int32Range minInclusive maxExclusive
@@ -198,13 +204,10 @@ let asciiChar = charRange ' ' '\x7F'
 /// Creates an argument generator that returns random floating point numbers in the specified range.
 let floatRange (minimum: float) (maximum: float) =
     let range = maximum - minimum
-    generatorInline (fun value ->
-        float (value % 2147483648uL) / 2147483648.0 * range + minimum
-        |> min maximum |> max minimum)
+    generatorInline (fun value -> float (value % 2147483648uL) / 2147483648.0 * range + minimum |> min maximum |> max minimum)
 
 /// Creates an argument generator that returns each items.
-let forEach (items: 'T[]) : int * IArgumentGenerator<'T> =
-    items.Length, upcast ForEachArgumentGenerator(items)
+let forEach (items: 'T[]) : int * IArgumentGenerator<'T> = items.Length, upcast ForEachArgumentGenerator(items)
 
 /// Creates an argument generator that returns lists containing the values generated by the specified generator.
 let list (elementGenerator: IArgumentGenerator<'T>) (lengthGenerator: IArgumentGenerator<int>) =
@@ -212,7 +215,7 @@ let list (elementGenerator: IArgumentGenerator<'T>) (lengthGenerator: IArgumentG
         member _.Generate(state) =
             let mutable result = []
             let length = lengthGenerator.Generate(&state)
-            for _ in 0..length - 1 do
+            for _ in 0 .. length - 1 do
                 result <- elementGenerator.Generate(&state) :: result
             result
     }
@@ -223,7 +226,7 @@ let array (elementGenerator: IArgumentGenerator<'T>) (lengthGenerator: IArgument
         member _.Generate(state) =
             let length = lengthGenerator.Generate(&state)
             let mutable result = Array.zeroCreate length
-            for i in 0..length - 1 do
+            for i in 0 .. length - 1 do
                 result[i] <- elementGenerator.Generate(&state)
             result
     }
@@ -234,15 +237,19 @@ let string (charGenerator: IArgumentGenerator<char>) (lengthGenerator: IArgument
         member _.Generate(state) =
             let length = lengthGenerator.Generate(&state)
             let stateRef = ref state
-            let text = String.Create(length, stateRef, fun span stateRef ->
-                let mutable state = stateRef.Value
-                for i in 0..span.Length - 1 do
-                    span[i] <- charGenerator.Generate(&state)
-                stateRef.Value <- state)
+            let text =
+                String.Create(
+                    length,
+                    stateRef,
+                    fun span stateRef ->
+                        let mutable state = stateRef.Value
+                        for i in 0 .. span.Length - 1 do
+                            span[i] <- charGenerator.Generate(&state)
+                        stateRef.Value <- state
+                )
             state <- stateRef.Value
             text
     }
 
 /// Creates an argument generator that returns random ascii strings.
-let asciiString (lengthGenerator: IArgumentGenerator<int>) : IArgumentGenerator<string> =
-    string asciiChar lengthGenerator
+let asciiString (lengthGenerator: IArgumentGenerator<int>) : IArgumentGenerator<string> = string asciiChar lengthGenerator
